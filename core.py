@@ -67,7 +67,7 @@ def generate_cookie():
 	return ''.join(random.choice(string.lowercase) for i in range(29))
 
 """----------------------------------------------------------------------------
-Log User In				(Redis)
+Log User In				(Postgres, Redis)
 ----------------------------------------------------------------------------"""
 # Errors:
 LUI_1 = "User already logged in."
@@ -77,7 +77,6 @@ LUI_3 = "Incorrect password for login."
 def LogUserIn(user_name, password):
 	response = get_default_response()
 	try:
-		print('start')
 		pg_conn, pg_curs = get_pg_conn_curser()
 		# First make sure no session exists for this username.
 		# Since we don't have a cookie, we need to check the
@@ -180,7 +179,6 @@ def LogUserIn(user_name, password):
 		# Return response.
 		return response
 	except Exception as ex:
-		print(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -188,20 +186,114 @@ def LogUserIn(user_name, password):
 		return response
 
 """----------------------------------------------------------------------------
-Log User In				(Redis)
+Log User Out				(Postgres, Redis)
 ----------------------------------------------------------------------------"""
 
-"""----------------------------------------------------------------------------
-Log User Out				(Redis)
-----------------------------------------------------------------------------"""
+def LogUserOut(cookie):
+	response = get_default_response()
+	try:
+		# Remove the session from the cookie_by_username tables.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		DELETE FROM
+			cookies_by_username
+		WHERE
+			cookie = %s
+		""",
+			(
+				cookie,
+			)
+		)
+		# Close postgres connection.
+		pg_conn.close()
+		# Remove the session from redis.
+		redis_conn = get_redis_conn()
+		redis_conn.delete(cookie)
+		# Return logout success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Set Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
+SSV_1 = "Unknown cookie."
+
+def SetSessionVariables(cookie, session_vars):
+	response = get_default_response()
+	try:
+		# First authenticate the user and make sure their cookie exists.
+		redis_conn = get_redis_conn()
+		session = redis_conn.get(cookie)
+		if session is None:
+			# Unknown cookie.
+			# The user is not authenticated.
+			response['error_code'] = "SSV_1"
+			response['error'] = SSV_1
+			response = set_response_failed(response)
+			return response
+		# Unmarshal the session, add the new values, re-marshal, and
+		# store back in redis.			
+
+		# Unmarshal session.
+		session = json.loads(session)
+		# Set new variables.
+		for key, value in session_vars.iteritems():
+			session[key] = value
+		# Remarshal session.
+		session = json.dumps(session)
+		# Store in redis.
+		redis_conn.set(cookie, session)
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Unset Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
+USV_1 = "Unknown cookie."
+
+def UnsetSessionVariables(cookie, session_vars):
+	response = get_default_response()
+	try:
+		# First authenticate the user and make sure their cookie exists.
+		redis_conn = get_redis_conn()
+		session = redis_conn.get(cookie)
+		if session is None:
+			# Unknown cookie.
+			# The user is not authenticated.
+			response['error_code'] = "USV_1"
+			response['error'] = USV_1
+			response = set_response_failed(response)
+			return response
+		# Unmarshal the session, add the new values, re-marshal, and
+		# store back in redis.			
+
+		# Unmarshal session.
+		session = json.loads(session)
+		# Remove session keys
+		for key, value in session_vars.iteritems():
+			session.pop(key, None)
+		# Remarshal session.
+		session = json.dumps(session)
+		# Store in redis.
+		redis_conn.set(cookie, session)
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Read Session Variable 			(Redis)
@@ -235,4 +327,7 @@ Disassociate User Role			(Postgres)
 LogUserIn('asdf','asdf')
 ----------------------------------------------------------------------------"""
 
-print(LogUserIn('user_name_1','super secret shit'))
+# print(LogUserIn('user_name_1','super secret shit'))
+# print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
+# print(SetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
+# print(UnsetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value'}))
