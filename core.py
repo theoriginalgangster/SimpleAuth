@@ -15,6 +15,8 @@ DBPASS 		= "simple_auth"
 REDISHOST 	= "localhost"
 REDISPORT 	= 6379
 
+ADMIN_KEY = "ADMIN_KEY"
+
 UE = "Unknown Error"
 
 def get_redis_conn():
@@ -298,18 +300,225 @@ def UnsetSessionVariables(cookie, session_vars):
 """----------------------------------------------------------------------------
 Read Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
+RSV_1 = "Unknown cookie."
+
+def ReadSessionVariables(cookie, session_keys):
+	response = get_default_response()
+	try:
+		# First authenticate the user and make sure their cookie exists.
+		redis_conn = get_redis_conn()
+		session = redis_conn.get(cookie)
+		if session is None:
+			# Unknown cookie.
+			# The user is not authenticated.
+			response['error_code'] = "RSV_1"
+			response['error'] = RSV_1
+			response = set_response_failed(response)
+			return response
+		# Unmarshal the session, find the values you need
+		# and return them.
+
+		# Get the session from redis.
+		redis_conn.get(cookie)
+		# Unmarshal session.
+		session = json.loads(session)
+		# Generate return set.
+		return_set = {}
+		# Find the keys we searched for. 
+		for key, value in session.iteritems():
+			if key in session_keys:
+				return_set[key] = value
+		# Set NULL for keys we didn't find.
+		for key in session_keys:
+			if key not in return_set:
+				return_set[key] = "NULL"
+		# Add the return to the reponse.
+		response['session_variables'] = return_set 
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		print(ex)
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Register User				(Postgres)
 ----------------------------------------------------------------------------"""
+RU_1 = "User already exists."
+
+def RegisterUser(user_name, password):
+	response = get_default_response()
+	try:
+		pg_conn, pg_curs = get_pg_conn_curser()
+		# First make sure no user with that user name exists.
+		pg_curs.execute("""
+		SELECT
+			count(*)
+		FROM 
+			users
+		WHERE
+			user_name = %s
+		""",
+			(
+				user_name,
+			)
+		)
+		result = pg_curs.fetchone()
+		count = result[0]
+		if count != 0:
+			# Close the db connection.
+			pg_conn.close()
+			# User already exists.
+			response['error_code'] = "RU_1"
+			response['error'] = RU_1
+			response = set_response_failed(response)
+			return response
+
+		# If there is no existing user, add the user to the users
+		# tables.
+
+		# Hash their password.
+		hashed = bcrypt.hashpw(password, bcrypt.gensalt())
+
+		pg_curs.execute("""
+		INSERT INTO
+			users
+		(
+			user_name,
+			pass_hash	
+		)
+		VALUES (%s, %s)
+		""",
+			(
+				user_name,
+				hashed
+			)
+		)
+		pg_conn.commit()
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		print(ex)
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Unregister User				(Postgres)
 ----------------------------------------------------------------------------"""
+UU_1 = "No cookie or admin key found."
+UU_2 = "Unauthorized admin request."
+
+def UnregisterUser(user_name, cookie, admin_key):
+	response = get_default_response()
+	try:
+		# First authenticate the user and make sure their cookie exists.
+		redis_conn = get_redis_conn()
+		session = redis_conn.get(cookie)
+		if session is None:
+			# Unknown cookie.
+			# The user is not authenticated.
+
+			# See if there is an admin_key.
+			if admin_key is None:
+				# There is also no admin key. This not an
+				# authenticated request.
+				response['error_code'] = "RSV_1"
+				response['error'] = RSV_1
+				response = set_response_failed(response)
+				return response
+			elif admin_key != ADMIN_KEY:
+				# The admin key was attempted but is
+				# incorrect.  This not an authenticated 
+				# request.
+				response['error_code'] = "RSV_2"
+				response['error'] = RSV_2
+				response = set_response_failed(response)
+				return response
+
+		# If the user is authenticated with a session or
+		# the admin key matches, delete the user.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		DELETE FROM
+			users
+		WHERE
+			user_name = %s
+		""",
+			(
+				user_name,
+			)
+		)
+		# Close postgres connection.
+		pg_conn.close()
+		# If the user was logged in, remove the session from redis.
+		if session is not None:
+			redis_conn = get_redis_conn()
+			redis_conn.delete(cookie)
+		# Return unregistration success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
-Create User Role			(Postgres)
+Register User Role			(Postgres)
 ----------------------------------------------------------------------------"""
+RUR_1 = "Invalid admin key."
+RUR_2 = "Role already exists."
+
+def RegisterUserRole(role_name, admin_key):
+	response = get_default_response()
+	try:
+		if admin_key != ADMIN_KEY:
+			# The admin key was attempted but is
+			# incorrect.  This not an authenticated 
+			# request.
+			response['error_code'] = "RUR_1"
+			response['error'] = RUR_1 
+			response = set_response_failed(response)
+			return response
+		# Just register the role. If it already exists, this will
+		# be caught in the exception.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		INSERT INTO
+			roles
+		(
+			role_name
+		)
+		VALUES (%s)
+		""",
+			(
+				role_name,
+			)
+		)
+		pg_conn.commit()
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Close the db connection.
+		pg_conn.close()
+		# Try to parse exceptions.
+		if "already exists" in str(ex):
+			# The role already exists.
+			response['error_code'] = "RUR_2"
+			response['error'] = RUR_2 
+			response = set_response_failed(response)
+			return response
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Associate User Role			(Postgres)
@@ -331,3 +540,7 @@ LogUserIn('asdf','asdf')
 # print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
 # print(SetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
 # print(UnsetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value'}))
+# print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
+# print(RegisterUser('someuser', 'somepassword'))
+# print(UnregisterUser('someuser', 'hmpnorcjnlzqsppnmwoymnrerheqq', None))
+print(RegisterUserRole('some_role', 'ADMIN_KEY'))
