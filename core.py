@@ -454,6 +454,8 @@ def UnregisterUser(user_name, cookie, admin_key):
 				user_name,
 			)
 		)
+		# Commit the transaction.
+		pg_conn.commit()
 		# Close postgres connection.
 		pg_conn.close()
 		# If the user was logged in, remove the session from redis.
@@ -539,8 +541,8 @@ LogUserIn('asdf','asdf')
 # print(LogUserIn('user_name_1','super secret shit'))
 # print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
 # print(SetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
-# print(UnsetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value'}))
-# print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
+# print(UnsetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
+print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
 # print(RegisterUser('someuser', 'somepassword'))
-# print(UnregisterUser('someuser', 'hmpnorcjnlzqsppnmwoymnrerheqq', None))
-print(RegisterUserRole('some_role', 'ADMIN_KEY'))
+# print(UnregisterUser('someuser', None, "ADMIN_KEY"))
+# NOT TESTED print(RegisterUserRole('some_role', 'ADMIN_KEY'))
