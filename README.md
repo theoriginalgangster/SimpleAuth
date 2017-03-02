@@ -1,4 +1,6 @@
-impleAuth:**
+It aint done yet!
+
+**SimpleAuth:**
 ===========
 
 SimpleAuth is a simple, secure, and fast service for setting creating and deleting users, and managing their sessions, all behind a simple json api. SimpleAuth is really simple.
