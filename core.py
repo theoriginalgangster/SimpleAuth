@@ -338,7 +338,6 @@ def ReadSessionVariables(cookie, session_keys):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		print(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -401,7 +400,6 @@ def RegisterUser(user_name, password):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		print(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -414,7 +412,7 @@ Unregister User				(Postgres)
 UU_1 = "No cookie or admin key found."
 UU_2 = "Unauthorized admin request."
 
-def UnregisterUser(user_name, cookie, admin_key):
+def UnregisterUser(admin_key, user_name, cookie):
 	response = get_default_response()
 	try:
 		# First authenticate the user and make sure their cookie exists.
@@ -473,20 +471,20 @@ def UnregisterUser(user_name, cookie, admin_key):
 		return response
 
 """----------------------------------------------------------------------------
-Register User Role			(Postgres)
+Register Role			(Postgres)
 ----------------------------------------------------------------------------"""
-RUR_1 = "Invalid admin key."
-RUR_2 = "Role already exists."
+RR_1 = "Invalid admin key."
+RR_2 = "Role already exists."
 
-def RegisterUserRole(role_name, admin_key):
+def RegisterRole(admin_key, role_name):
 	response = get_default_response()
 	try:
 		if admin_key != ADMIN_KEY:
 			# The admin key was attempted but is
 			# incorrect.  This not an authenticated 
 			# request.
-			response['error_code'] = "RUR_1"
-			response['error'] = RUR_1 
+			response['error_code'] = "RR_1"
+			response['error'] = RR_1 
 			response = set_response_failed(response)
 			return response
 		# Just register the role. If it already exists, this will
@@ -514,8 +512,8 @@ def RegisterUserRole(role_name, admin_key):
 		# Try to parse exceptions.
 		if "already exists" in str(ex):
 			# The role already exists.
-			response['error_code'] = "RUR_2"
-			response['error'] = RUR_2 
+			response['error_code'] = "RR_2"
+			response['error'] = RR_2 
 			response = set_response_failed(response)
 			return response
 		# Return default failure response.
@@ -525,24 +523,161 @@ def RegisterUserRole(role_name, admin_key):
 """----------------------------------------------------------------------------
 Associate User Role			(Postgres)
 ----------------------------------------------------------------------------"""
+AUR_1 = "Invalid admin key."
+AUR_2 = "User does not exists."
+AUR_3 = "Role does not exists."
+AUR_4 = "User role association already exists."
+
+def AssociateUserRole(admin_key, user_name, role_name):
+	response = get_default_response()
+	try:
+		if admin_key != ADMIN_KEY:
+			# The admin key was attempted but is
+			# incorrect.  This not an authenticated 
+			# request.
+			response['error_code'] = "AUR_1"
+			response['error'] = AUR_1 
+			response = set_response_failed(response)
+			return response
+		# Just register the role. If it already exists, this will
+		# be caught in the exception.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		INSERT INTO
+			user_roles
+		(
+			user_name,
+			role_name
+		)
+		VALUES (%s, %s)
+		""",
+			(
+				user_name,
+				role_name,	
+			)
+		)
+		pg_conn.commit()
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Close the db connection.
+		pg_conn.close()
+		# Try to parse exceptions.
+		if "already exists" in str(ex):
+			# The user role already exists.
+			response['error_code'] = "AUR_4"
+			response['error'] = AUR_4 
+			response = set_response_failed(response)
+			return response
+		if ("user_name" in str(ex)) and ("violates foreign key constraint" in str(ex)):
+			# Invlalid user fk.
+			response['error_code'] = "AUR_2"
+			response['error'] = AUR_2 
+			response = set_response_failed(response)
+			return response
+		if ("role_name" in str(ex)) and ("violates foreign key constraint" in str(ex)):
+			# Invlalid role fk.
+			response['error_code'] = "AUR_3"
+			response['error'] = AUR_3 
+			response = set_response_failed(response)
+			return response
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
-Remove User Role			(Postgres)
+Unregister Role			(Postgres)
 ----------------------------------------------------------------------------"""
+UR_1 = "Invalid admin key."
+
+def UnregisterRole(admin_key, role_name):
+	response = get_default_response()
+	try:
+		if admin_key != ADMIN_KEY:
+			# The admin key was attempted but is
+			# incorrect.  This not an authenticated 
+			# request.
+			response['error_code'] = "UR_1"
+			response['error'] = UR_1 
+			response = set_response_failed(response)
+			return response
+		# Just register the role. If it already exists, this will
+		# be caught in the exception.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		DELETE FROM
+			roles
+		WHERE
+			role_name = %s
+		""",
+			(
+				role_name,	
+			)
+		)
+		pg_conn.commit()
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 """----------------------------------------------------------------------------
 Disassociate User Role			(Postgres)
 ----------------------------------------------------------------------------"""
+DUR_1 = "Invalid admin key."
 
-"""----------------------------------------------------------------------------
-LogUserIn('asdf','asdf')
-----------------------------------------------------------------------------"""
+def DisassociateUserRole(admin_key, user_name, role_name):
+	response = get_default_response()
+	try:
+		if admin_key != ADMIN_KEY:
+			# The admin key was attempted but is
+			# incorrect.  This not an authenticated 
+			# request.
+			response['error_code'] = "DUR_1"
+			response['error'] = DUR_1 
+			response = set_response_failed(response)
+			return response
+		# Just unregister the user role. If it doesnt already exists, 
+		# the state of the application will still be the same as what
+		# the user expects it to be after the command.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		DELETE FROM
+			user_roles
+		WHERE
+			user_name = %s
+		AND
+			role_name = %s
+		""",
+			(
+				user_name,
+				role_name,	
+			)
+		)
+		pg_conn.commit()
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
 
 # print(LogUserIn('user_name_1','super secret shit'))
 # print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
 # print(SetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
 # print(UnsetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
-print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
+# print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
 # print(RegisterUser('someuser', 'somepassword'))
+# print(RegisterRole(ADMIN_KEY, 'some_role'))
 # print(UnregisterUser('someuser', None, "ADMIN_KEY"))
-# NOT TESTED print(RegisterUserRole('some_role', 'ADMIN_KEY'))
+# print(AssociateUserRole(ADMIN_KEY, "test", "some_role"))
+# print(DisassociateUserRole(ADMIN_KEY, "test", "some_role"))
+# print(UnregisterRole(ADMIN_KEY, "some_role"))
