@@ -1,0 +1,25 @@
+<html>
+	<head>
+		 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"></script> 
+	<body>
+		<textarea rows="29" cols="50" id="json_request_input">Test JSON Request Here!</textarea>
+		<br>
+		<code id="json_response_output">JSON Response Here!</code>
+		<br>
+		<button onclick="test()">Test</button>
+<script>
+function test() {
+	$.ajax({
+		type: 'POST',
+		url: "/api",
+		contentType: "application/json; charset=utf-8",
+		data: $("#json_request_input").val(),
+		success: function(response) { 
+			console.log(response)
+			$("#json_response_output").html(JSON.stringify(response))
+		}   
+	}); 
+}
+</script>
+	</body>
+</html>

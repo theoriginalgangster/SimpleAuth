@@ -36,15 +36,15 @@ SimpleAuth is so simple, you can read the all documentation right here, right no
 **Quick Start:**
 =====================
 
-Log Users In:
+*Log Users In:
 -------------
 
 **Request:**
 
     {
-    	command: "log_in",
-    	user_name: "simpleauth@email.com",
-    	password: "some password"
+        "command": "log_in",
+        "user_name": "example_user@gmail.com",
+        "password": "example_password"
     }
     
 **Possible responses:**
@@ -64,14 +64,14 @@ Failure:
     	error_code: "LUI_1"
     }
 
-Log Users Out:
+*Log Users Out:
 --------------
 
 **Possible requests:**
  
     {
-    	command: "log_out",
-    	cookie: "abc123"
+    	"command": "log_out",
+    	"cookie": "abc123"
     }
 
 **Possible responses:**
@@ -90,32 +90,18 @@ Failure:
     	error_code: "LOU_1"
     }
     
-Set Session Variables:
+*Set Session Variables:
 --------------
 
 **Possible requests:**
 
-Set single variable:
-
     {
-        command: "set_session_var",
-        cookie: "abc123",
-    	session_key: "some_variable_key",
-    	session_value: "{wow: such_value}"
-    }
-Set multiple variables:
-
-    {
-        command: "set_session_var",
-        cookie: "abc123",
-    	session_keys: [
-	    	"first_key",
-	    	"second_key"
-        ],
-    	session_values: [
-	    	"first_value",
-	    	"second_value: {'wow': 'such_value'}"
-    	]
+        "command": "set_session_vars",
+        "cookie": "abc123",
+    	"session_vars": {
+	    	"first_key": "first_value",
+	    	"second_key": "second_value"
+    	}
     }
     
 **Possible responses:**
@@ -134,28 +120,18 @@ Failure:
     	error_code: "SSV_1"
     }
 
-Unset Session Variables:
+*Unset Session Variables:
 --------------
 
 **Possible requests:**
 
-Unset a single variable:
-
     {
-        command: "unset_session_var",
-        cookie: "abc123",
-        session_key: "some_key"
-    }
-
-Unset a multiple variables:
-
-    {
-        command: "unset_session_var",
-        cookie: "abc123",
-        session_keys: [
-            "first_key",
-            "second_key"
-        ]
+        "command": "unset_session_vars",
+        "cookie": "abc123",
+        "session_keys": [
+	        "first_key",
+	        "second_key"
+	    ]
     }
 
 **Possible responses:**
@@ -174,26 +150,16 @@ Failure:
     	error_code: "USV_1"
     }
 
-Read Session Variables:
+*Read Session Variables:
 --------------
 
 **Possible requests:**
 
-Read a single variable:
-
     {
-        command: "read_session_var",
-        cookie: "abc123",
-        session_key: "some_session_key"
-    }
-
-Read a multiple variables:
-
-    {
-        command: "read_session_var",
-        cookie: "abc123",
-        session_keys: [
-	        "first",
+        "command": "read_session_vars",
+        "cookie": "abc123",
+        "session_keys": [
+	        "first_key",
 	        "second_key"
 	    ]
     }
@@ -203,7 +169,7 @@ Read a multiple variables:
    
     {
     	success: "true",
-    	session_variables: {
+    	session_vars: {
 	    	"some_key": "some_value",
 	    	"another_key": "another_value"
     	}
@@ -217,15 +183,15 @@ Failure:
     	error_code: "RSV_1"
     }
     
-Register a User:
+*Register a User:
 --------------
 
 **Possible requests:**
 
     {
-        command: "register_user",
-        user_name: "newuser@gmail.com",
-        password: "some password"
+        "command": "register_user",
+        "user_name": "example_user@gmail.com",
+        "password": "example_password"
     }
 
 **Possible responses:**
@@ -252,9 +218,9 @@ Unregister a User:
 Using cookie if user is logged in.
 
     {
-        command: "unregister_user",
-        user_name: "newuser@gmail.com",
-        cookie: "abc123"
+        "command": "unregister_user",
+        "user_name": "newuser@gmail.com",
+        "cookie": "abc123"
     }
 
 Using an admin key:
@@ -397,4 +363,5 @@ Failure:
 ================
 
 All error codes are prepended by their command, then followed by a number.
+
 

@@ -38,6 +38,8 @@ def get_pg_conn_curser():
 	pg_cursor = pg_conn.cursor()
 	return pg_conn, pg_cursor
 
+def log_core_exception(exception):
+	print(exception)
 
 def get_default_response():
 	response = {}
@@ -181,6 +183,7 @@ def LogUserIn(user_name, password):
 		# Return response.
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -194,6 +197,7 @@ Log User Out				(Postgres, Redis)
 def LogUserOut(cookie):
 	response = get_default_response()
 	try:
+		print("FROM CORE: " + cookie)
 		# Remove the session from the cookie_by_username tables.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
@@ -206,6 +210,8 @@ def LogUserOut(cookie):
 				cookie,
 			)
 		)
+		# Commit the query.
+		pg_conn.commit()
 		# Close postgres connection.
 		pg_conn.close()
 		# Remove the session from redis.
@@ -215,6 +221,7 @@ def LogUserOut(cookie):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -226,7 +233,7 @@ Set Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
 SSV_1 = "Unknown cookie."
 
-def SetSessionVariables(cookie, session_vars):
+def SetSessionVars(cookie, session_vars):
 	response = get_default_response()
 	try:
 		# First authenticate the user and make sure their cookie exists.
@@ -255,6 +262,7 @@ def SetSessionVariables(cookie, session_vars):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -264,7 +272,7 @@ Unset Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
 USV_1 = "Unknown cookie."
 
-def UnsetSessionVariables(cookie, session_vars):
+def UnsetSessionVars(cookie, session_vars):
 	response = get_default_response()
 	try:
 		# First authenticate the user and make sure their cookie exists.
@@ -283,7 +291,7 @@ def UnsetSessionVariables(cookie, session_vars):
 		# Unmarshal session.
 		session = json.loads(session)
 		# Remove session keys
-		for key, value in session_vars.iteritems():
+		for key in session_vars:
 			session.pop(key, None)
 		# Remarshal session.
 		session = json.dumps(session)
@@ -293,6 +301,7 @@ def UnsetSessionVariables(cookie, session_vars):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -302,7 +311,7 @@ Read Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
 RSV_1 = "Unknown cookie."
 
-def ReadSessionVariables(cookie, session_keys):
+def ReadSessionVars(cookie, session_keys):
 	response = get_default_response()
 	try:
 		# First authenticate the user and make sure their cookie exists.
@@ -338,6 +347,7 @@ def ReadSessionVariables(cookie, session_keys):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -400,6 +410,7 @@ def RegisterUser(user_name, password):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -464,6 +475,7 @@ def UnregisterUser(admin_key, user_name, cookie):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -507,6 +519,7 @@ def RegisterRole(admin_key, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Try to parse exceptions.
@@ -561,6 +574,7 @@ def AssociateUserRole(admin_key, user_name, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Try to parse exceptions.
@@ -620,6 +634,7 @@ def UnregisterRole(admin_key, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -664,6 +679,7 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
+		log_core_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -672,10 +688,10 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 
 # print(LogUserIn('user_name_1','super secret shit'))
 # print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
-# print(SetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
-# print(UnsetSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
+# print(SetSessionVars('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
+# print(UnsetSessionVars('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
 # print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
-# print(RegisterUser('someuser', 'somepassword'))
+# print(RegisterUser('new_user', 'new_password'))
 # print(RegisterRole(ADMIN_KEY, 'some_role'))
 # print(UnregisterUser('someuser', None, "ADMIN_KEY"))
 # print(AssociateUserRole(ADMIN_KEY, "test", "some_role"))
