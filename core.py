@@ -420,10 +420,9 @@ def RegisterUser(user_name, password):
 """----------------------------------------------------------------------------
 Unregister User				(Postgres)
 ----------------------------------------------------------------------------"""
-UU_1 = "No cookie or admin key found."
-UU_2 = "Unauthorized admin request."
+UU_2 = "Unauthorized request."
 
-def UnregisterUser(admin_key, user_name, cookie):
+def UnregisterUser(user_name, cookie):
 	response = get_default_response()
 	try:
 		# First authenticate the user and make sure their cookie exists.
@@ -434,19 +433,12 @@ def UnregisterUser(admin_key, user_name, cookie):
 			# The user is not authenticated.
 
 			# See if there is an admin_key.
-			if admin_key is None:
-				# There is also no admin key. This not an
-				# authenticated request.
-				response['error_code'] = "RSV_1"
-				response['error'] = RSV_1
-				response = set_response_failed(response)
-				return response
-			elif admin_key != ADMIN_KEY:
+			if cookie != ADMIN_KEY:
 				# The admin key was attempted but is
 				# incorrect.  This not an authenticated 
 				# request.
-				response['error_code'] = "RSV_2"
-				response['error'] = RSV_2
+				response['error_code'] = "UU_2"
+				response['error'] = UU_2 
 				response = set_response_failed(response)
 				return response
 

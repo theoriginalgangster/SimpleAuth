@@ -36,7 +36,7 @@ SimpleAuth is so simple, you can read the all documentation right here, right no
 **Quick Start:**
 =====================
 
-*Log Users In:
+Log Users In:
 -------------
 
 **Request:**
@@ -64,7 +64,7 @@ Failure:
     	error_code: "LUI_1"
     }
 
-*Log Users Out:
+Log Users Out:
 --------------
 
 **Possible requests:**
@@ -90,7 +90,7 @@ Failure:
     	error_code: "LOU_1"
     }
     
-*Set Session Variables:
+Set Session Variables:
 --------------
 
 **Possible requests:**
@@ -120,7 +120,7 @@ Failure:
     	error_code: "SSV_1"
     }
 
-*Unset Session Variables:
+Unset Session Variables:
 --------------
 
 **Possible requests:**
@@ -150,7 +150,7 @@ Failure:
     	error_code: "USV_1"
     }
 
-*Read Session Variables:
+Read Session Variables:
 --------------
 
 **Possible requests:**
@@ -183,7 +183,7 @@ Failure:
     	error_code: "RSV_1"
     }
     
-*Register a User:
+Register a User:
 --------------
 
 **Possible requests:**
@@ -223,14 +223,6 @@ Using cookie if user is logged in.
         "cookie": "abc123"
     }
 
-Using an admin key:
-
-    {
-        command: "unregister_user",
-        user_name: "newuser@gmail.com",
-        admin_key: "super_secret_key"
-    }
-
 **Possible responses:**
 
    Success:
@@ -253,9 +245,9 @@ Register a User Role:
 **Possible requests:**
 
     {
-        command: "register_user_role",
-        admin_key: "super_secret_key",
-        user_role: "some_user_role"
+        "command": "register_role",
+        "admin_key": "super_secret_key",
+        "role_name": "example_role"
     }
 
 **Possible responses:**
@@ -280,10 +272,10 @@ Associate a User to a Role:
 **Possible requests:**
 
     {
-        command: "associate_user_role",
-        admin_key: "super_secret_key",
-        user_name: "simpleauth@email.com",
-        user_role: "some_user_role"
+        "command": "associate_user_role",
+        "admin_key": "super_secret_key",
+        "user_name": "example_user@gmail.com",
+        "role_name": "example_role"
     }
 
 **Possible responses:**
@@ -309,9 +301,9 @@ Unregister a User Role:
 **Possible requests:**
 
     {
-        command: "unregister_user_role",
-        admin_key: "super_secret_key",
-        user_role: "some_user_role"
+        "command": "unregister_role",
+        "admin_key": "super_secret_key",
+        "role_name": "example_role"
     }
 
 **Possible responses:**
@@ -336,10 +328,10 @@ Disassociate a User to a Role:
 **Possible requests:**
 
     {
-        command: "disassociate_user_role",
-        admin_key: "super_secret_key",
-        user_name: "simpleauth@email.com",
-        user_role: "some_user_role"
+        "command": "disassociate_user_role",
+        "admin_key": "super_secret_key",
+        "user_name": "example_user@gmail.com",
+        "role_name": "example_role"
     }
 
 **Possible responses:**
