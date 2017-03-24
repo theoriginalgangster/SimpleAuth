@@ -1,5 +1,3 @@
-It aint done yet!
-
 **SimpleAuth:**
 ===========
 
