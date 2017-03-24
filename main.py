@@ -1,4 +1,3 @@
-# sample.py
 import falcon
 import json
 import core
