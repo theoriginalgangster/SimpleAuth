@@ -38,7 +38,7 @@ def get_pg_conn_curser():
 	pg_cursor = pg_conn.cursor()
 	return pg_conn, pg_cursor
 
-def log_core_exception(exception):
+def log_auth_exception(exception):
 	print(exception)
 
 def get_default_response():
@@ -183,7 +183,7 @@ def LogUserIn(user_name, password):
 		# Return response.
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -221,7 +221,7 @@ def LogUserOut(cookie):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -262,7 +262,7 @@ def SetSessionVars(cookie, session_vars):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -301,7 +301,7 @@ def UnsetSessionVars(cookie, session_vars):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -347,7 +347,7 @@ def ReadSessionVars(cookie, session_keys):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Return default failure response.
 		response = set_response_failed(response)
 		return response
@@ -410,7 +410,7 @@ def RegisterUser(user_name, password):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -467,7 +467,7 @@ def UnregisterUser(user_name, cookie):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -511,7 +511,7 @@ def RegisterRole(admin_key, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Try to parse exceptions.
@@ -566,7 +566,7 @@ def AssociateUserRole(admin_key, user_name, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Try to parse exceptions.
@@ -626,7 +626,7 @@ def UnregisterRole(admin_key, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.
@@ -671,7 +671,7 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 		response = set_response_success(response)
 		return response
 	except Exception as ex:
-		log_core_exception(ex)
+		log_auth_exception(ex)
 		# Close the db connection.
 		pg_conn.close()
 		# Return default failure response.

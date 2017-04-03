@@ -1,6 +1,6 @@
 import falcon
 import json
-import core
+import auth
  
 class QuoteResource:
     def on_post(self, req, resp):
@@ -12,44 +12,40 @@ class QuoteResource:
 	}
 
 	try:
-		core_req = json.loads(req.stream.read().encode("utf-8"))
-		import pprint as pp
-		pp.pprint(core_req)
-		if core_req["command"] == "log_in":
-			core_resp = core.LogUserIn(
-				core_req["user_name"], 
-				core_req["password"].encode("utf-8"))
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "log_out":
-			core_resp = core.LogUserOut(core_req["cookie"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "register_user":
-			core_resp = core.RegisterUser(core_req["user_name"], core_req["password"].encode("utf-8"))
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "unregister_user":
-			core_resp = core.UnregisterUser(core_req["user_name"], core_req["cookie"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "read_session_vars":
-			core_resp = core.ReadSessionVars(core_req["cookie"], core_req["session_keys"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "set_session_vars":
-			core_resp = core.SetSessionVars(core_req["cookie"], core_req["session_vars"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "unset_session_vars":
-			core_resp = core.UnsetSessionVars(core_req["cookie"], core_req["session_keys"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "register_role":
-			core_resp = core.RegisterRole(core_req["admin_key"], core_req["role_name"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "unregister_role":
-			core_resp = core.UnregisterRole(core_req["admin_key"], core_req["role_name"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "associate_user_role":
-			core_resp = core.AssociateUserRole(core_req["admin_key"], core_req["user_name"], core_req["role_name"])
-        		resp.body = json.dumps(core_resp)
-		elif core_req["command"] == "disassociate_user_role":
-			core_resp = core.DisassociateUserRole(core_req["admin_key"], core_req["user_name"], core_req["role_name"])
-        		resp.body = json.dumps(core_resp)
+		auth_req = json.loads(req.stream.read().encode("utf-8"))
+		if auth_req["command"] == "log_in":
+			auth_resp = auth.LogUserIn(auth_req["user_name"], auth_req["password"].encode("utf-8"))
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "log_out":
+			auth_resp = auth.LogUserOut(auth_req["cookie"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "register_user":
+			auth_resp = auth.RegisterUser(auth_req["user_name"], auth_req["password"].encode("utf-8"))
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "unregister_user":
+			auth_resp = auth.UnregisterUser(auth_req["user_name"], auth_req["cookie"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "read_session_vars":
+			auth_resp = auth.ReadSessionVars(auth_req["cookie"], auth_req["session_keys"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "set_session_vars":
+			auth_resp = auth.SetSessionVars(auth_req["cookie"], auth_req["session_vars"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "unset_session_vars":
+			auth_resp = auth.UnsetSessionVars(auth_req["cookie"], auth_req["session_keys"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "register_role":
+			auth_resp = auth.RegisterRole(auth_req["admin_key"], auth_req["role_name"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "unregister_role":
+			auth_resp = auth.UnregisterRole(auth_req["admin_key"], auth_req["role_name"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "associate_user_role":
+			auth_resp = auth.AssociateUserRole(auth_req["admin_key"], auth_req["user_name"], auth_req["role_name"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "disassociate_user_role":
+			auth_resp = auth.DisassociateUserRole(auth_req["admin_key"], auth_req["user_name"], auth_req["role_name"])
+        		resp.body = json.dumps(auth_resp)
 		else:
 			api_resp["error"] = "Unrecognized Command."
 			api_resp["error_code"] = "API_2"
