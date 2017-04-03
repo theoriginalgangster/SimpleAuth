@@ -395,7 +395,7 @@ Read Gitkit User Session :
 **Possible requests:**
 
     {
-        "command": "read_gitkit_session_vars",
+        "command": "read_gitkit_user_session_vars",
         "g_apptoken": "some_native_token_only_for_sso",
         "session_keys": [
 	        "first_key",
@@ -428,7 +428,7 @@ Log Gitkit Users Out:
 **Possible requests:**
  
     {
-    	"command": "gitkit_log_out",
+    	"command": "gitkit_user_log_out",
     	"g_apptoken": "some_native_token_only_for_sso"
     }
 

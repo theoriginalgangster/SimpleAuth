@@ -46,6 +46,15 @@ class QuoteResource:
 		elif auth_req["command"] == "disassociate_user_role":
 			auth_resp = auth.DisassociateUserRole(auth_req["admin_key"], auth_req["user_name"], auth_req["role_name"])
         		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "handle_only_gitkit_token":
+			auth_resp = auth.HandleOnlyGitkitToken(auth_req["email_address"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "read_gitkit_user_session_vars":
+			auth_resp = auth.ReadGitkitUserSessionVars(auth_req["g_apptoken"], auth_req["session_keys"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "gitkit_user_log_out":
+			auth_resp = auth.LogGitkitUserOut(auth_req["g_apptoken"])
+        		resp.body = json.dumps(auth_resp)
 		else:
 			api_resp["error"] = "Unrecognized Command."
 			api_resp["error_code"] = "API_2"

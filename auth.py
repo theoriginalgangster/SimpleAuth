@@ -678,6 +678,184 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 		response = set_response_failed(response)
 		return response
 
+
+
+
+###############################################################################
+"""----------------------------------------------------------------------------
+
+	HANDLING GOOGLE IDENTITY TOOLKIT:
+
+----------------------------------------------------------------------------"""
+###############################################################################
+
+
+
+
+"""----------------------------------------------------------------------------
+Handle Only Gitkit Token 		(Postgres, Redis)
+----------------------------------------------------------------------------"""
+# Errors:
+# This should never happen.
+
+def HandleOnlyGitkitToken(email_address):
+	response = get_default_response()
+	try:
+		pg_conn, pg_curs = get_pg_conn_curser()
+		# Inser the record into google users. Creation
+		# timestamp will be set on creation, insert again
+		# on reinsert, if confluct occurs, last login will
+		# be the only field updated. 
+		pg_curs.execute("""
+		INSERT INTO
+			google_users
+		(
+			email_address
+		)
+		VALUES (%s)
+		ON CONFLICT (email_address)
+		DO UPDATE
+		SET
+			last_login = NOW()
+		""",
+			(
+				email_address,
+			)
+		)
+		pg_conn.commit()
+
+		# Build the session.
+		g_apptoken = "g_" + generate_cookie() # Actually a token for google only users.
+		session = {}
+		session['user_name'] = email_address 
+		session['creation_timestamp'] = str(datetime.datetime.now())
+		session['g_apptoken'] = g_apptoken 
+
+		# Set the session in Redis so we can look it up by g_apptoken (a cookie)
+		# hella fast.
+		redis_conn = get_redis_conn()
+		redis_conn.set(g_apptoken, json.dumps(session))
+
+		# Insert the user session (g_apptoken) into
+		# the g_apptokens_by_email_address table.
+		pg_curs.execute("""
+		INSERT INTO
+			g_apptokens_by_email_address
+		(
+			email_address,
+			g_apptoken
+		)
+		VALUES (%s, %s)
+		ON CONFLICT (email_address)
+		DO UPDATE
+		SET
+			g_apptoken = %s
+		""",
+			(
+				email_address,
+				g_apptoken,
+				g_apptoken,
+			)
+		)
+		pg_conn.commit()
+
+		# Prepare the response.
+		response['g_apptoken'] = g_apptoken 
+		response = set_response_success(response)
+
+		# Close the db connection.
+		pg_conn.close()
+		# Return response.
+		return response
+	except Exception as ex:
+		log_auth_exception(ex)
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
+
+"""----------------------------------------------------------------------------
+Read Gitkit User Session 		(Redis)
+----------------------------------------------------------------------------"""
+RGUS_1 = "Unknown g_apptoken."
+
+def ReadGitkitUserSessionVars(g_apptoken, session_keys):
+	response = get_default_response()
+	try:
+		# First authenticate the user and make sure their cookie exists.
+		redis_conn = get_redis_conn()
+		session = redis_conn.get(g_apptoken)
+		if session is None:
+			# Unknown g_apptoken.
+			# The user is not authenticated.
+			response['error_code'] = "RSV_1"
+			response['error'] = RGUS_1 
+			response = set_response_failed(response)
+			return response
+		# Unmarshal the session, find the values you need
+		# and return them.
+
+		# Get the session from redis.
+		redis_conn.get(g_apptoken)
+		# Unmarshal session.
+		session = json.loads(session)
+		# Generate return set.
+		return_set = {}
+		# Find the keys we searched for. 
+		for key, value in session.iteritems():
+			if key in session_keys:
+				return_set[key] = value
+		# Set NULL for keys we didn't find.
+		for key in session_keys:
+			if key not in return_set:
+				return_set[key] = "NULL"
+		# Add the return to the reponse.
+		response['session_variables'] = return_set 
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		log_auth_exception(ex)
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
+
+"""----------------------------------------------------------------------------
+Log Gitkit User Out			(Postgres, Redis)
+----------------------------------------------------------------------------"""
+
+def LogGitkitUserOut(g_apptoken):
+	response = get_default_response()
+	try:
+		# Remove from the g_apptokens_by_email_address table.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		DELETE FROM
+			g_apptokens_by_email_address
+		WHERE
+			g_apptoken = %s
+		""",
+			(
+				g_apptoken,	
+			)
+		)
+		pg_conn.commit()
+		# Remove the session from redis.
+		redis_conn = get_redis_conn()
+		redis_conn.delete(g_apptoken)
+		# Return logout success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		log_auth_exception(ex)
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
+
+
 # print(LogUserIn('user_name_1','super secret shit'))
 # print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
 # print(SetSessionVars('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
@@ -689,3 +867,6 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 # print(AssociateUserRole(ADMIN_KEY, "test", "some_role"))
 # print(DisassociateUserRole(ADMIN_KEY, "test", "some_role"))
 # print(UnregisterRole(ADMIN_KEY, "some_role"))
+# print(HandleOnlyGitkitToken("zndr.k.94@gmail.com"))
+# print(ReadGitkitUserSessionVars("g_kpnaojystvyykcuoousntdkdxszlk", ['creation_timestamp', 'cookie', 'asdfasdf']))
+# print(LogGitkitUserOut("g_kpnaojystvyykcuoousntdkdxszlk"))
