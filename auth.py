@@ -197,7 +197,6 @@ Log User Out				(Postgres, Redis)
 def LogUserOut(cookie):
 	response = get_default_response()
 	try:
-		print("FROM CORE: " + cookie)
 		# Remove the session from the cookie_by_username tables.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
