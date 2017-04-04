@@ -6,7 +6,7 @@ SimpleAuth is a simple, secure, and fast micro-service for setting creating and 
 **What can you do with SimpleAuth?**
 
 - Log users in
-- Log users out
+- Log users out (plus forced logout)
 - Set session variables
 - Unset session variables
 - Read session variables
@@ -86,6 +86,32 @@ Failure:
     	success: "false",
     	error: "User is already logged out."
     	error_code: "LOU_1"
+    }
+Forced Users Log Out:
+--------------
+
+Note: In the even that a user clears their cache or looses their cookie for whatever reason, attempts to re-login will need to be preceded by logging out and logging back in since login is the only time a session cookie will be provided. In this case, it will be required to log a user out via their username, but this should only be done if the web server has a valid `ADMIN_KEY`.
+
+    {
+    	"command": "force_log_out",
+    	"user_name": "example_user@gmail.com",
+	    "admin_key": "some_admin_key"
+    }
+    
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true",
+    }
+
+Failure:
+
+    {
+    	success: "false",
+    	error: "Incorrect admin key."
+    	error_code: "FLOU_1"
     }
     
 Set Session Variables:
@@ -368,7 +394,7 @@ Handle Only Gitkit Token (registration and login):
 
     {
         "command": "handle_only_gitkit_token",
-        "email_address": "example_user@gmail.com"
+        "email_address": "gitkit_user@gmail.com"
     }
 
 **Possible responses:**
@@ -422,7 +448,7 @@ Failure:
     	error_code: "RGUS_1"
     }
 
-Log Gitkit Users Out:
+Gitkit Users Log Out:
 --------------
 
 **Possible requests:**
@@ -445,9 +471,35 @@ Failure:
     {
     	success: "false",
     	error: "Gitkit user is already logged out."
-    	error_code: "LGUO_1"
+    	error_code: "GULO_1"
     }
 
+Force Gitkit Users Log Out:
+--------------
+
+**Possible requests:**
+ 
+    {
+    	"command": "force_gitkit_user_log_out",
+    	"email_address": "gitkit_user@gmail.com",
+    	"admin_key": "some_admin_key"
+    }
+
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true",
+    }
+
+Failure:
+
+    {
+    	success: "false",
+    	error: "Invalid admin key",
+    	error_code: "FGULO_1"
+    }
 
 
 ***Note: In addition to reading Gitkit users sessions, you should be able to set them, so we also have Set and Unset Gitkit Session Vars***
@@ -482,7 +534,7 @@ Failure:
     	error_code: "SGUSV_1"
     }
 
-Unset Session Variables:
+Unset Gitkit User Session Variables:
 --------------
 
 **Possible requests:**
@@ -516,4 +568,5 @@ Failure:
 ================
 
 All error codes are prepended by their command, then followed by a number.
+
 

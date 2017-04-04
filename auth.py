@@ -229,6 +229,68 @@ def LogUserOut(cookie):
 		return response
 
 """----------------------------------------------------------------------------
+Forced User Log Out			(Postgres, Redis)
+----------------------------------------------------------------------------"""
+FLOU_1 = "Incorrect admin key."
+
+def ForceLogUserOut(user_name, admin_key):
+	response = get_default_response()
+	try:
+		# Ensure the admin key is correct.
+		if admin_key != ADMIN_KEY:
+			response['error_code'] = "FLOU_1"
+			response['error'] = FLOU_1 
+			response = set_response_failed(response)
+			return response
+
+		pg_conn, pg_curs = get_pg_conn_curser()
+		# Look up the cookie for the username.
+		pg_curs.execute("""
+		SELECT
+			cookie
+		FROM 
+			cookies_by_username
+		WHERE
+			user_name = %s
+		""",
+			(
+				user_name,
+			)
+		)
+		result = pg_curs.fetchone()
+		# If the cookie exists, remove the user from the 
+		# cookies by username table.
+		if result is not None:
+			cookie = result[0]
+			pg_curs.execute("""
+			DELETE FROM
+				cookies_by_username
+			WHERE
+				cookie = %s
+			""",
+				(
+					cookie,
+				)
+			)
+			# Commit the query.
+			pg_conn.commit()
+			# Remove the session from redis.
+			redis_conn = get_redis_conn()
+			redis_conn.delete(cookie)
+		# Close postgres connection.
+		pg_conn.close()
+		# Return logout success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		log_auth_exception(ex)
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
+
+"""----------------------------------------------------------------------------
 Set Session Variable 			(Redis)
 ----------------------------------------------------------------------------"""
 SSV_1 = "Unknown cookie."
@@ -822,10 +884,10 @@ def ReadGitkitUserSessionVars(g_apptoken, session_keys):
 		return response
 
 """----------------------------------------------------------------------------
-Log Gitkit User Out			(Postgres, Redis)
+Gitkit User Log Out			(Postgres, Redis)
 ----------------------------------------------------------------------------"""
 
-def LogGitkitUserOut(g_apptoken):
+def GitkitUserLogOut(g_apptoken):
 	response = get_default_response()
 	try:
 		# Remove from the g_apptokens_by_email_address table.
@@ -855,9 +917,72 @@ def LogGitkitUserOut(g_apptoken):
 		response = set_response_failed(response)
 		return response
 
+"""----------------------------------------------------------------------------
+Force Gitkit User Log Out		(Postgres, Redis)
+----------------------------------------------------------------------------"""
+FGULO_1 = "Invalid admin key."
+
+def ForceGitkitUserLogOut(email_address, admin_key):
+	response = get_default_response()
+	try:
+		# Ensure the admin key is correct.
+		if admin_key != ADMIN_KEY:
+			response['error_code'] = "FGULO_1"
+			response['error'] = FGULO_1 
+			response = set_response_failed(response)
+			return response
+
+		pg_conn, pg_curs = get_pg_conn_curser()
+		# Look up the g_apptoken for the email_address.
+		pg_curs.execute("""
+		SELECT
+			g_apptoken
+		FROM 
+			g_apptokens_by_email_address
+		WHERE
+			email_address = %s
+		""",
+			(
+				email_address,
+			)
+		)
+		result = pg_curs.fetchone()
+		# If the g_apptoken exists, remove the user from the 
+		# g_apptoken by email_address table.
+		if result is not None:
+			g_apptoken = result[0]
+			pg_curs.execute("""
+			DELETE FROM
+				g_apptokens_by_email_address
+			WHERE
+				g_apptoken = %s
+			""",
+				(
+					g_apptoken,
+				)
+			)
+			# Commit the query.
+			pg_conn.commit()
+			# Remove the session from redis.
+			redis_conn = get_redis_conn()
+			redis_conn.delete(g_apptoken)
+		# Close postgres connection.
+		pg_conn.close()
+		# Return logout success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		log_auth_exception(ex)
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
+
 
 # print(LogUserIn('user_name_1','super secret shit'))
 # print(LogUserOut('ulmaskkvtvjvxlixhdizzmbmhzigh'))
+# print(ForceLogUserOut("example_user@gmail.com", ADMIN_KEY))
 # print(SetSessionVars('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
 # print(UnsetSessionVars('hmpnorcjnlzqsppnmwoymnrerheqq', {'key': 'value', 'key1': 'value1'}))
 # print(ReadSessionVariables('hmpnorcjnlzqsppnmwoymnrerheqq', ['creation_timestamp', 'cookie', 'asdfasdf']))
@@ -869,4 +994,5 @@ def LogGitkitUserOut(g_apptoken):
 # print(UnregisterRole(ADMIN_KEY, "some_role"))
 # print(HandleOnlyGitkitToken("zndr.k.94@gmail.com"))
 # print(ReadGitkitUserSessionVars("g_kpnaojystvyykcuoousntdkdxszlk", ['creation_timestamp', 'cookie', 'asdfasdf']))
-# print(LogGitkitUserOut("g_kpnaojystvyykcuoousntdkdxszlk"))
+# print(GitkitUserLogOut("g_kpnaojystvyykcuoousntdkdxszlk"))
+# print(ForceGitkitUserLogOut("zndr.k.94@gmail.com", "ADMIN_KEY"))
