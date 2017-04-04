@@ -1,7 +1,7 @@
 import falcon
 import json
 import auth
- 
+
 class QuoteResource:
     def on_post(self, req, resp):
         """Handles GET requests"""
@@ -18,6 +18,9 @@ class QuoteResource:
         		resp.body = json.dumps(auth_resp)
 		elif auth_req["command"] == "log_out":
 			auth_resp = auth.LogUserOut(auth_req["cookie"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "force_log_out":
+			auth_resp = auth.ForceLogUserOut(auth_req["user_name"], auth_req["admin_key"])
         		resp.body = json.dumps(auth_resp)
 		elif auth_req["command"] == "register_user":
 			auth_resp = auth.RegisterUser(auth_req["user_name"], auth_req["password"].encode("utf-8"))
@@ -53,7 +56,10 @@ class QuoteResource:
 			auth_resp = auth.ReadGitkitUserSessionVars(auth_req["g_apptoken"], auth_req["session_keys"])
         		resp.body = json.dumps(auth_resp)
 		elif auth_req["command"] == "gitkit_user_log_out":
-			auth_resp = auth.LogGitkitUserOut(auth_req["g_apptoken"])
+			auth_resp = auth.GitkitUserLogOut(auth_req["g_apptoken"])
+        		resp.body = json.dumps(auth_resp)
+		elif auth_req["command"] == "force_gitkit_user_log_out":
+			auth_resp = auth.ForceGitkitUserLogOut(auth_req["email_address"], auth_req["admin_key"])
         		resp.body = json.dumps(auth_resp)
 		else:
 			api_resp["error"] = "Unrecognized Command."
