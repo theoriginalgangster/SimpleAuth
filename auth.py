@@ -88,7 +88,8 @@ def LogUserIn(user_name, password):
 		pg_curs.execute("""
 		PREPARE LogUserIn_sub1(text) AS
 			SELECT
-				cookie
+				cookie,
+				creation_timestamp
 			FROM 
 				cookies_by_username	
 			WHERE
@@ -100,20 +101,17 @@ def LogUserIn(user_name, password):
 			)
 		)
 		result = pg_curs.fetchone()
+		already_logged_in = False
 		if result is not None:
-			# Close the db connection.
-			pg_conn.close()
 			# User already logged in.
-			# Return the cookie as if you are loggin them in
-			# for the first time.
+			#
+			# If the password matches, return the cookie 
+			# as if you are loggin them in  for the 
+			# first time.
+			already_logged_in = True
 			cookie = result[0]
+			creation_timestamp = result[1]
 
-			# Prepare the response.
-			response['cookie'] = cookie
-			response = set_response_success(response)
-
-			# Return response.
-			return response
 		# Next, get the username and password for the user.
 		pg_curs.execute("""
 		PREPARE LogUserIn_sub2(text) AS
@@ -149,6 +147,19 @@ def LogUserIn(user_name, password):
 			response['error'] = LUI_3
 			response = set_response_failed(response)
 			return response
+		elif already_logged_in == True:
+			# The user is already logged in and the passwords
+			# match. Return the cookie as if they are logged
+			# in for the first time.
+
+			# Prepare the response.
+			response['cookie'] = cookie
+			response = set_response_success(response)
+			# Close the db connection.
+			pg_conn.close()
+			# Return response.
+			return response
+
 		# If there is no mismatch, log the user into the
 		# cookies_by_username table and into the redis
 		# session store.
