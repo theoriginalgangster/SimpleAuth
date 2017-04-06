@@ -15,6 +15,14 @@ DBPASS 		= "simple_auth"
 REDISHOST 	= "localhost"
 REDISPORT 	= 6379
 
+# Redis key timeout.
+# Timeout for session to remove itself after
+# inactivity.
+# @TODO Note: Make sure to expire every time
+# you set something or else this won't work.
+# need to put this in a function.
+SESSION_EXPIRE_MINUTES = 30
+
 ADMIN_KEY = "ADMIN_KEY"
 
 UE = "Unknown Error"
@@ -167,6 +175,7 @@ def LogUserIn(user_name, password):
 			# hella fast.
 			redis_conn = get_redis_conn()
 			redis_conn.set(cookie, json.dumps(session))
+			redis_conn.expire(cookie, 60*SESSION_EXPIRE_MINUTES)
 
 			# Prepare the response.
 			response['cookie'] = cookie
@@ -211,6 +220,7 @@ def LogUserIn(user_name, password):
 		# hella fast.
 		redis_conn = get_redis_conn()
 		redis_conn.set(cookie, json.dumps(session))
+		redis_conn.expire(cookie, 60*SESSION_EXPIRE_MINUTES)
 
 		# Prepare the response.
 		response['cookie'] = cookie
@@ -363,6 +373,7 @@ def SetSessionVars(cookie, session_vars):
 		session = json.dumps(session)
 		# Store in redis.
 		redis_conn.set(cookie, session)
+		redis_conn.expire(cookie, 60*SESSION_EXPIRE_MINUTES)
 		# Return success.
 		response = set_response_success(response)
 		return response
@@ -402,6 +413,7 @@ def UnsetSessionVars(cookie, session_vars):
 		session = json.dumps(session)
 		# Store in redis.
 		redis_conn.set(cookie, session)
+		redis_conn.expire(cookie, 60*SESSION_EXPIRE_MINUTES)
 		# Return success.
 		response = set_response_success(response)
 		return response
@@ -857,6 +869,7 @@ def HandleOnlyGitkitToken(email_address):
 		# hella fast.
 		redis_conn = get_redis_conn()
 		redis_conn.set(g_apptoken, json.dumps(session))
+		redis_conn.expire(g_apptoken, 60*SESSION_EXPIRE_MINUTES)
 
 		# Insert the user session (g_apptoken) into
 		# the g_apptokens_by_email_address table.
