@@ -152,6 +152,22 @@ def LogUserIn(user_name, password):
 			# match. Return the cookie as if they are logged
 			# in for the first time.
 
+			# Make sure the data is actually in redis.
+			# Sometimes, for one reason or another, it's not
+			# so when the user tries the loggin comand again,
+			# make sure it's set.
+
+			# Build the session.
+			session = {}
+			session['user_name'] = user_name
+			session['creation_timestamp'] = str(creation_timestamp)
+			session['cookie'] = cookie
+
+			# Set the session in Redis so we can look it up by cookie
+			# hella fast.
+			redis_conn = get_redis_conn()
+			redis_conn.set(cookie, json.dumps(session))
+
 			# Prepare the response.
 			response['cookie'] = cookie
 			response = set_response_success(response)
