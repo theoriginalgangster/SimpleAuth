@@ -1,2 +1,4 @@
 *.pyc
-servicelog
+logfile
+/test
+*.sh
