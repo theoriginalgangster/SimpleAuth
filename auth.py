@@ -470,6 +470,7 @@ def RegisterUser(user_name, password):
 
 		# Hash their password.
 		hashed = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
+		hashed = hashed.decode('utf8')
 
 		pg_curs.execute("""
 		PREPARE RegisterUser_sub2(text, text) AS
