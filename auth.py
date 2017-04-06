@@ -86,12 +86,14 @@ def LogUserIn(user_name, password):
 		# Since we don't have a cookie, we need to check the
 		# table cookies_by_user_name.
 		pg_curs.execute("""
-		SELECT
-			count(*)
-		FROM 
-			cookies_by_username	
-		WHERE
-			user_name = %s
+		PREPARE LogUserIn_sub1(text) AS
+			SELECT
+				count(*)
+			FROM 
+				cookies_by_username	
+			WHERE
+				user_name = $1;
+		EXECUTE LogUserIn_sub1(%s);
 		""",
 			(
 				user_name,
@@ -109,12 +111,14 @@ def LogUserIn(user_name, password):
 			return response
 		# Next, get the username and password for the user.
 		pg_curs.execute("""
-		SELECT
-			pass_hash	
-		FROM
-			users
-		WHERE
-			user_name = %s
+		PREPARE LogUserIn_sub2(text) AS
+			SELECT
+				pass_hash	
+			FROM
+				users
+			WHERE
+				user_name = $1;
+		EXECUTE LogUserIn_sub2(%s);
 		""",
 			(
 				user_name,
@@ -154,13 +158,15 @@ def LogUserIn(user_name, password):
 		# Set the session in postgres so that we have a relational
 		# way to look it up by username.
 		pg_curs.execute("""
-		INSERT INTO
-			cookies_by_username
-		(
-			cookie,
-			user_name
-		)
-		VALUES (%s, %s)
+                PREPARE LogUserIn_sub3(text, text) AS
+			INSERT INTO
+				cookies_by_username
+			(
+				cookie,
+				user_name
+			)
+			VALUES ($1, $2);
+                EXECUTE LogUserIn_sub3(%s, %s);
 		""",
 			(
 				cookie,
@@ -197,14 +203,15 @@ Log User Out				(Postgres, Redis)
 def LogUserOut(cookie):
 	response = get_default_response()
 	try:
-		print("FROM CORE: " + cookie)
 		# Remove the session from the cookie_by_username tables.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		DELETE FROM
-			cookies_by_username
-		WHERE
-			cookie = %s
+		PREPARE LogUserOut_sub1(text) AS
+			DELETE FROM
+				cookies_by_username
+			WHERE
+				cookie = $1;
+		EXECUTE LogUserOut_sub1(%s);
 		""",
 			(
 				cookie,
@@ -246,12 +253,14 @@ def ForceLogUserOut(user_name, admin_key):
 		pg_conn, pg_curs = get_pg_conn_curser()
 		# Look up the cookie for the username.
 		pg_curs.execute("""
-		SELECT
-			cookie
-		FROM 
-			cookies_by_username
-		WHERE
-			user_name = %s
+		PREPARE ForceLogUserOut_sub1(text) AS
+			SELECT
+				cookie
+			FROM 
+				cookies_by_username
+			WHERE
+				user_name = $1;
+		EXECUTE ForceLogUserOut_sub1(%s);
 		""",
 			(
 				user_name,
@@ -263,10 +272,12 @@ def ForceLogUserOut(user_name, admin_key):
 		if result is not None:
 			cookie = result[0]
 			pg_curs.execute("""
-			DELETE FROM
-				cookies_by_username
-			WHERE
-				cookie = %s
+			PREPARE ForceLogUserOut_sub2(text) AS
+				DELETE FROM
+					cookies_by_username
+				WHERE
+					cookie = $1;
+			EXECUTE ForceLogUserOut_sub2(%s);
 			""",
 				(
 					cookie,
@@ -425,12 +436,14 @@ def RegisterUser(user_name, password):
 		pg_conn, pg_curs = get_pg_conn_curser()
 		# First make sure no user with that user name exists.
 		pg_curs.execute("""
-		SELECT
-			count(*)
-		FROM 
-			users
-		WHERE
-			user_name = %s
+		PREPARE RegisterUser_sub1(text) AS
+			SELECT
+				count(*)
+			FROM 
+				users
+			WHERE
+				user_name = $1;
+		EXECUTE RegisterUser_sub1(%s);
 		""",
 			(
 				user_name,
@@ -454,13 +467,15 @@ def RegisterUser(user_name, password):
 		hashed = bcrypt.hashpw(password, bcrypt.gensalt())
 
 		pg_curs.execute("""
-		INSERT INTO
-			users
-		(
-			user_name,
-			pass_hash	
-		)
-		VALUES (%s, %s)
+		PREPARE RegisterUser_sub2(text, text) AS
+			INSERT INTO
+				users
+			(
+				user_name,
+				pass_hash	
+			)
+			VALUES ($1, $2);
+		EXECUTE RegisterUser_sub2(%s, %s);
 		""",
 			(
 				user_name,
@@ -508,10 +523,12 @@ def UnregisterUser(user_name, cookie):
 		# the admin key matches, delete the user.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		DELETE FROM
-			users
-		WHERE
-			user_name = %s
+		PREPARE UnregisterUser_sub1(text) AS
+			DELETE FROM
+				users
+			WHERE
+				user_name = $1;
+		EXECUTE UnregisterUser_sub1(%s);
 		""",
 			(
 				user_name,
@@ -557,12 +574,14 @@ def RegisterRole(admin_key, role_name):
 		# be caught in the exception.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		INSERT INTO
-			roles
-		(
-			role_name
-		)
-		VALUES (%s)
+		PREPARE RegisterRole_sub1(text) AS
+			INSERT INTO
+				roles
+			(
+				role_name
+			)
+			VALUES ($1);
+		EXECUTE RegisterRole_sub1(%s);
 		""",
 			(
 				role_name,
@@ -610,13 +629,15 @@ def AssociateUserRole(admin_key, user_name, role_name):
 		# be caught in the exception.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		INSERT INTO
-			user_roles
-		(
-			user_name,
-			role_name
-		)
-		VALUES (%s, %s)
+		PREPARE AssociateUserRole_sub1(text, text) AS
+			INSERT INTO
+				user_roles
+			(
+				user_name,
+				role_name
+			)
+			VALUES ($1, $2);
+		EXECUTE AssociateUserRole_sub1(%s, %s);
 		""",
 			(
 				user_name,
@@ -674,10 +695,12 @@ def UnregisterRole(admin_key, role_name):
 		# be caught in the exception.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		DELETE FROM
-			roles
-		WHERE
-			role_name = %s
+		PREPARE UnregisterRole_sub1(text) AS
+			DELETE FROM
+				roles
+			WHERE
+				role_name = $1;
+		EXECUTE UnregisterRole_sub1(%s);
 		""",
 			(
 				role_name,	
@@ -716,12 +739,14 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 		# the user expects it to be after the command.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		DELETE FROM
-			user_roles
-		WHERE
-			user_name = %s
-		AND
-			role_name = %s
+		PREPARE DisassociateUserRole_sub1(text, text) AS
+			DELETE FROM
+				user_roles
+			WHERE
+				user_name = $1
+			AND
+				role_name = $2;
+		EXECUTE DisassociateUserRole_sub1(%s, %s);
 		""",
 			(
 				user_name,
@@ -769,16 +794,18 @@ def HandleOnlyGitkitToken(email_address):
 		# on reinsert, if confluct occurs, last login will
 		# be the only field updated. 
 		pg_curs.execute("""
-		INSERT INTO
-			google_users
-		(
-			email_address
-		)
-		VALUES (%s)
-		ON CONFLICT (email_address)
-		DO UPDATE
-		SET
-			last_login = NOW()
+		PREPARE HandleOnlyGitkitToken_sub1(text) AS
+			INSERT INTO
+				google_users
+			(
+				email_address
+			)
+			VALUES ($1)
+			ON CONFLICT (email_address)
+			DO UPDATE
+			SET
+				last_login = NOW();
+		EXECUTE HandleOnlyGitkitToken_sub1(%s);
 		""",
 			(
 				email_address,
@@ -801,17 +828,19 @@ def HandleOnlyGitkitToken(email_address):
 		# Insert the user session (g_apptoken) into
 		# the g_apptokens_by_email_address table.
 		pg_curs.execute("""
-		INSERT INTO
-			g_apptokens_by_email_address
-		(
-			email_address,
-			g_apptoken
-		)
-		VALUES (%s, %s)
-		ON CONFLICT (email_address)
-		DO UPDATE
-		SET
-			g_apptoken = %s
+		PREPARE HandleOnlyGitkitToken_sub2(text, text, text) AS
+			INSERT INTO
+				g_apptokens_by_email_address
+			(
+				email_address,
+				g_apptoken
+			)
+			VALUES ($1, $2)
+			ON CONFLICT (email_address)
+			DO UPDATE
+			SET
+				g_apptoken = $3;
+		EXECUTE HandleOnlyGitkitToken_sub2(%s, %s, %s);
 		""",
 			(
 				email_address,
@@ -893,10 +922,12 @@ def GitkitUserLogOut(g_apptoken):
 		# Remove from the g_apptokens_by_email_address table.
 		pg_conn, pg_curs = get_pg_conn_curser()
 		pg_curs.execute("""
-		DELETE FROM
-			g_apptokens_by_email_address
-		WHERE
-			g_apptoken = %s
+		PREPARE GitkitUserLogOut_sub1(text) AS
+			DELETE FROM
+				g_apptokens_by_email_address
+			WHERE
+				g_apptoken = $1;
+		EXECUTE GitkitUserLogOut_sub1(%s);
 		""",
 			(
 				g_apptoken,	
@@ -935,12 +966,14 @@ def ForceGitkitUserLogOut(email_address, admin_key):
 		pg_conn, pg_curs = get_pg_conn_curser()
 		# Look up the g_apptoken for the email_address.
 		pg_curs.execute("""
-		SELECT
-			g_apptoken
-		FROM 
-			g_apptokens_by_email_address
-		WHERE
-			email_address = %s
+		PREPARE ForceGitkitUserLogOut_sub1(text) AS
+			SELECT
+				g_apptoken
+			FROM 
+				g_apptokens_by_email_address
+			WHERE
+				email_address = $1;
+		EXECUTE ForceGitkitUserLogOut_sub1(%s);
 		""",
 			(
 				email_address,
@@ -952,10 +985,12 @@ def ForceGitkitUserLogOut(email_address, admin_key):
 		if result is not None:
 			g_apptoken = result[0]
 			pg_curs.execute("""
-			DELETE FROM
-				g_apptokens_by_email_address
-			WHERE
-				g_apptoken = %s
+			PREPARE ForceGitkitUserLogOut_sub2(text) AS
+				DELETE FROM
+					g_apptokens_by_email_address
+				WHERE
+					g_apptoken = $1;
+			EXECUTE ForceGitkitUserLogOut_sub2(%s);
 			""",
 				(
 					g_apptoken,
