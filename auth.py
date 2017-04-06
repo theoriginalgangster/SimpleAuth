@@ -141,7 +141,7 @@ def LogUserIn(user_name, password):
 		# Check the password hash against what the user gave
 		# as a password.
 		hashed = result[0]
-		if bcrypt.hashpw(password, hashed) != hashed:
+		if bcrypt.hashpw(password.encode('utf8'), hashed) != hashed:
 			# Close the db connection.
 			pg_conn.close()
 			# Incorrect password for login.
@@ -469,7 +469,7 @@ def RegisterUser(user_name, password):
 		# tables.
 
 		# Hash their password.
-		hashed = bcrypt.hashpw(password, bcrypt.gensalt())
+		hashed = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
 
 		pg_curs.execute("""
 		PREPARE RegisterUser_sub2(text, text) AS
