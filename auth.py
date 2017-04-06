@@ -88,7 +88,7 @@ def LogUserIn(user_name, password):
 		pg_curs.execute("""
 		PREPARE LogUserIn_sub1(text) AS
 			SELECT
-				count(*)
+				cookie
 			FROM 
 				cookies_by_username	
 			WHERE
@@ -100,14 +100,19 @@ def LogUserIn(user_name, password):
 			)
 		)
 		result = pg_curs.fetchone()
-		count = result[0]
-		if count != 0:
+		if result is not None:
 			# Close the db connection.
 			pg_conn.close()
 			# User already logged in.
-			response['error_code'] = "LUI_1"
-			response['error'] = LUI_1
-			response = set_response_failed(response)
+			# Return the cookie as if you are loggin them in
+			# for the first time.
+			cookie = result[0]
+
+			# Prepare the response.
+			response['cookie'] = cookie
+			response = set_response_success(response)
+
+			# Return response.
 			return response
 		# Next, get the username and password for the user.
 		pg_curs.execute("""
