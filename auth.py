@@ -39,7 +39,7 @@ def get_pg_conn_curser():
 	return pg_conn, pg_cursor
 
 def log_auth_exception(exception):
-	print(exception)
+	sys.stdout.write(exception)
 
 def get_default_response():
 	response = {}
