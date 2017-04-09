@@ -293,9 +293,10 @@ def GReadMessages(g_apptoken, chat_partner, max_messages):
 			message['read'] = row[1]
 			message['date'] = row[2]
 			if row[3] == user_name:
-				message['sender'] = True 
+				message['reader_is_sender'] = True 
 			else:
-				message['sender'] = False
+				message['reader_is_sender'] = False
+			message['sender'] = row[3]
 			messages.append(message)
 			message_ids.append(row[4])
 		# Mark messages as read. This doesn't need to be a
@@ -408,9 +409,10 @@ def ReadMessages(apptoken, chat_partner, max_messages):
 			message['read'] = row[1]
 			message['date'] = row[2]
 			if row[3] == user_name:
-				message['sender'] = True 
+				message['reader_is_sender'] = True 
 			else:
-				message['sender'] = False
+				message['reader_is_sender'] = False
+			message['sender'] = row[3]
 			messages.append(message)
 			message_ids.append(row[4])
 		# Mark messages as read. This doesn't need to be a
