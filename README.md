@@ -564,31 +564,24 @@ Failure:
     	error_code: "UGUSV_1"
     }
 
-**Gitkit User Messaging:**
+**User Messaging:**
 ================
 
-Users with signed up with Google will likely need to have messaging functionality between themselves and other Google users, and admin users. Messages will need to have a recipient, creation timestamp, and read-receipts.
+Users will be able to send messages, but will be handled slightly differently for native users and Google users. Google users will have to submit a `g_apptoken` while native users will just send their `apptoken`.
 
-Because of the nature of how Google users and native users are set up, messaging is handled separately for both, each with the convention "native" and "gitkit". 
+One-to-one messaging functionality is enabled here with regular users, google users, and the two together.
 
-Gitkit user will be able to:
+Messages have recipients, senders, content, timestamps, and read-receipts.
 
-1) Send messages to native users.
-2) Send messages to gitkit users.
-3) Read all messages from native chat-partner notification box.
-4) Read all messages from gitkit chat-partner notification box.
-
-Authentication will be handled service side, so a valid cookie will need to be passed in.
-
-Send To Native User:
+Google User Send Message
 --------------
 
 **Possible requests:**
 
     {
-        "command": "g_send_to_native_user",
+        "command": "g_send_message",
         "g_apptoken": "some_g_apptoken",
-        "recipient": "nativeuser@gmail.com",
+        "recipient": "example_user@gmail.com",
         "message": "some message"
     }
 
@@ -608,47 +601,22 @@ Failure:
     	error_code: "GSTNU_1"
     }
 
-Send To Gitkit User:
+
+Google User Read All Messages:
 --------------
 
 **Possible requests:**
 
     {
-        "command": "g_send_to_gitkit_user",
-        "g_apptoken": "some_g_apptoken",
-        "recipient": "gitkit_user@gmail.com",
-        "message": "some message"
-    }
-
-**Possible responses:**
-
-   Success:
-   
-    {
-    	success: "true"
-    }
-
-Failure:
-
-    {
-    	success: "false",
-    	error: "Unknown cookie."
-    	error_code: "GSTGU_1"
-    }
-
-Read All Native Inbox Messages:
---------------
-
-**Possible requests:**
-
-    {
-        "command": "g_read_all_native_inbox_messages",
+        "command": "g_read_all_messages",
         "g_apptoken": "some_g_apptoken",
         "chat_partner": "nativeuser@gmail.com",
         "max_messages": 20
     }
 
 **Possible responses:**
+
+Note: `sender` denotes if the fetcher of the messages (user with the token) is the sender. If not, they are the recipient and `sender` will be false.
 
    Success:
    
@@ -657,18 +625,21 @@ Read All Native Inbox Messages:
     	messages: [
 		    {
 		    	date: "2017-02-03 21:23:42",
-			    message: "Some message",
-				read: true
+			    message: "Hey!",
+				read: true,
+				sender: false
 			},
 					    {
 		    	date: "2017-02-03 21:24:42",
-			    message: "Some other message",
-				read: false
+			    message: "What?!",
+				read: true,
+				sender: true
 			},
 					    {
 		    	date: "2017-02-03 21:25:42",
-			    message: "Some other new message",
-				read: false
+			    message: "Your face!",
+				read: false,
+				sender: false
 			}
     	]
     }
@@ -679,51 +650,6 @@ Failure:
     	success: "false",
     	error: "Unknown cookie."
     	error_code: "GRANIM_1"
-    }
-    
-Read All Gitkit Inbox Messages:
---------------
-
-**Possible requests:**
-
-    {
-        "command": "g_read_all_gitkit_inbox_messages",
-        "g_apptoken": "some_g_apptoken",
-        "chat_partner": "gitkit_user@gmail.com",
-        "max_messages": 20
-    }
-
-**Possible responses:**
-
-   Success:
-   
-    {
-    	success: "true",
-    	messages: [
-		    {
-		    	date: "2017-02-03 21:23:42",
-			    message: "Some message",
-				read: true
-			},
-					    {
-		    	date: "2017-02-03 21:24:42",
-			    message: "Some other message",
-				read: false
-			},
-					    {
-		    	date: "2017-02-03 21:25:42",
-			    message: "Some other new message",
-				read: false
-			}
-    	]
-    }
-
-Failure:
-
-    {
-    	success: "false",
-    	error: "Unknown cookie."
-    	error_code: "GRAGIM_1"
     }
     
     
