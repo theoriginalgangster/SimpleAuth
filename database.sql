@@ -74,6 +74,43 @@ CREATE TABLE google_users (
 ALTER TABLE google_users OWNER TO postgres;
 
 --
+-- Name: notification_messages; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE notification_messages (
+    id integer NOT NULL,
+    sender character varying(255),
+    recipient character varying(255),
+    read boolean DEFAULT false NOT NULL,
+    creation_timestamp timestamp without time zone DEFAULT now() NOT NULL,
+    message text NOT NULL
+);
+
+
+ALTER TABLE notification_messages OWNER TO postgres;
+
+--
+-- Name: notification_messages_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE notification_messages_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE notification_messages_id_seq OWNER TO postgres;
+
+--
+-- Name: notification_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE notification_messages_id_seq OWNED BY notification_messages.id;
+
+
+--
 -- Name: roles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -105,17 +142,25 @@ ALTER TABLE user_roles OWNER TO postgres;
 CREATE TABLE users (
     user_name character varying(255) NOT NULL,
     pass_hash character varying(255) NOT NULL,
-    creation_timestamp timestamp without time zone
+    creation_timestamp timestamp without time zone DEFAULT now() NOT NULL
 );
 
 
 ALTER TABLE users OWNER TO postgres;
 
 --
+-- Name: notification_messages id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY notification_messages ALTER COLUMN id SET DEFAULT nextval('notification_messages_id_seq'::regclass);
+
+
+--
 -- Data for Name: cookies_by_username; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY cookies_by_username (user_name, cookie, creation_timestamp) FROM stdin;
+example_user@gmail.com	ecqvepmfpwmzzmrqmcbcsvtwqwdrk	2017-04-05 21:46:05.243873
 \.
 
 
@@ -124,7 +169,7 @@ COPY cookies_by_username (user_name, cookie, creation_timestamp) FROM stdin;
 --
 
 COPY g_apptokens_by_email_address (email_address, g_apptoken, creation_timestamp) FROM stdin;
-zndr.k.94@gmail.com	g_plrvgjvixrotrewwmgdpyvhnungxh	2017-04-03 00:15:02.074455
+gitkit_user@gmail.com	g_gaixdslwzgxgjtldrypubssqhkbqs	2017-04-09 00:27:50.762661
 \.
 
 
@@ -133,10 +178,30 @@ zndr.k.94@gmail.com	g_plrvgjvixrotrewwmgdpyvhnungxh	2017-04-03 00:15:02.074455
 --
 
 COPY google_users (email_address, creation_timestamp, last_login) FROM stdin;
-new_guy@gmail.com	2017-04-02 22:51:38.270002	2017-04-02 22:51:44.461903
-zndr.k.94@gmail.com	2017-04-02 22:48:48.7878	2017-04-03 00:15:03.257574
-example_user@gmail.com	2017-04-03 00:22:08.614517	2017-04-03 00:22:36.4561
+gitkit_user@gmail.com	2017-04-09 00:27:50.760632	2017-04-09 02:51:21.980328
 \.
+
+
+--
+-- Data for Name: notification_messages; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY notification_messages (id, sender, recipient, read, creation_timestamp, message) FROM stdin;
+1	gitkit_user@gmail.com	example_user@gmail.com	t	2017-04-09 00:40:29.521555	Hey!
+5	example_user@gmail.com	gitkit_user@gmail.com	t	2017-04-09 02:39:48.624602	test from example to gitkit_user
+6	gitkit_user@gmail.com	example_user@gmail.com	t	2017-04-09 02:51:28.441219	some message
+7	example_user@gmail.com	gitkit_user@gmail.com	t	2017-04-09 02:59:23.924954	message from me
+2	example_user@gmail.com	gitkit_user@gmail.com	t	2017-04-09 00:40:29.521555	Hey again dude
+3	gitkit_user@gmail.com	example_user@gmail.com	t	2017-04-09 00:47:19.335612	something
+4	example_user@gmail.com	gitkit_user@gmail.com	t	2017-04-09 02:39:17.217249	something else
+\.
+
+
+--
+-- Name: notification_messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('notification_messages_id_seq', 7, true);
 
 
 --
@@ -160,7 +225,8 @@ COPY user_roles (user_name, role_name, creation_timestamp) FROM stdin;
 --
 
 COPY users (user_name, pass_hash, creation_timestamp) FROM stdin;
-example_user@gmail.com	$2b$12$yzf3dfy8hj.dnuJ7nU9N/u69YAqONlaKUuUBHiLc8Px6pW9lx8QAu	\N
+example_user@gmail.com	$2b$12$c2/nhQWTJB/iiyVnNi3sz.AI7Rt8P5v1kJFd0qHzRH568H2Rc.eJm	2017-04-09 00:22:53.093715
+gitkit_user@gmail.com	GOOGLE_NO_PASS	2017-04-09 00:27:50.756996
 \.
 
 
@@ -178,6 +244,14 @@ ALTER TABLE ONLY g_apptokens_by_email_address
 
 ALTER TABLE ONLY google_users
     ADD CONSTRAINT google_users_pkey PRIMARY KEY (email_address);
+
+
+--
+-- Name: notification_messages notification_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY notification_messages
+    ADD CONSTRAINT notification_messages_pkey PRIMARY KEY (id);
 
 
 --
@@ -213,11 +287,35 @@ ALTER TABLE ONLY g_apptokens_by_email_address
 
 
 --
+-- Name: google_users google_users_email_address_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY google_users
+    ADD CONSTRAINT google_users_email_address_fkey FOREIGN KEY (email_address) REFERENCES users(user_name) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: cookies_by_username lookup_user_name_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY cookies_by_username
     ADD CONSTRAINT lookup_user_name_fk FOREIGN KEY (user_name) REFERENCES users(user_name) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: notification_messages notification_messages_recipient_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY notification_messages
+    ADD CONSTRAINT notification_messages_recipient_fkey FOREIGN KEY (recipient) REFERENCES users(user_name) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: notification_messages notification_messages_sender_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY notification_messages
+    ADD CONSTRAINT notification_messages_sender_fkey FOREIGN KEY (sender) REFERENCES users(user_name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -255,6 +353,20 @@ GRANT ALL ON TABLE g_apptokens_by_email_address TO simple_auth;
 --
 
 GRANT ALL ON TABLE google_users TO simple_auth;
+
+
+--
+-- Name: notification_messages; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE notification_messages TO simple_auth;
+
+
+--
+-- Name: notification_messages_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE notification_messages_id_seq TO simple_auth;
 
 
 --
