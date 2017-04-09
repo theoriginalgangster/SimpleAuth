@@ -373,6 +373,33 @@ Failure:
         error: "User does not exist",
         error_code "DUR_1"
     }
+    
+Confirm User Role:
+--------------
+
+**Possible requests:**
+
+    {
+        "command": "confirm_user_role",
+        "cookie": "some_app_token",
+        "role_name": "dashboard_blogs"
+    }
+
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true"
+    }
+
+Failure:
+
+    {
+    	success: "false",
+        error: "User-role association not found.",
+        error_code "CUR_2"
+    }
 
 **Handling Google Identity Toolkit:**
 ================
