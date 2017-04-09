@@ -602,13 +602,13 @@ Failure:
     }
 
 
-Google User Read All Messages:
+Google User Read Messages:
 --------------
 
 **Possible requests:**
 
     {
-        "command": "g_read_all_messages",
+        "command": "g_read_messages",
         "g_apptoken": "some_g_apptoken",
         "chat_partner": "nativeuser@gmail.com",
         "max_messages": 20
@@ -652,6 +652,76 @@ Failure:
     	error_code: "GRANIM_1"
     }
     
+
+Send Message
+--------------
+
+**Possible requests:**
+
+    {
+        "command": "send_message",
+        "apptoken": "some_apptoken",
+        "recipient": "gitkit_user@gmail.com",
+        "message": "some message"
+    }
+
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true"
+    }
+
+Failure:
+
+    {
+    	success: "false",
+    	error: "Unknown cookie."
+    	error_code: "GSTNU_1"
+    }
+    
+Read Messages:
+--------------
+
+**Possible requests:**
+
+    {
+        "command": "read_messages",
+        "g_apptoken": "some_apptoken",
+        "chat_partner": "gitkit_user@gmail.com",
+        "max_messages": 20
+    }
+
+**Possible responses:**
+
+Note: `sender` denotes if the fetcher of the messages (user with the token) is the sender. If not, they are the recipient and `sender` will be false.
+
+   Success:
+   
+    {
+    	success: "true",
+    	messages: [
+		    {
+		    	date: "2017-02-03 21:23:42",
+			    message: "Hey!",
+				read: true,
+				sender: false
+			},
+					    {
+		    	date: "2017-02-03 21:24:42",
+			    message: "What?!",
+				read: true,
+				sender: true
+			},
+					    {
+		    	date: "2017-02-03 21:25:42",
+			    message: "Your face!",
+				read: false,
+				sender: false
+			}
+    	]
+    }
     
 **All Error Codes:**
 ================
