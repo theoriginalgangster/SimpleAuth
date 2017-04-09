@@ -834,12 +834,31 @@ def HandleOnlyGitkitToken(email_address):
 	response = get_default_response()
 	try:
 		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		PREPARE HandleOnlyGitkitToken_sub1(text) AS
+			INSERT INTO
+				users
+			(
+				user_name,
+				pass_hash
+			)
+			VALUES ($1, 'GOOGLE_NO_PASS')
+			ON CONFLICT (user_name)
+			DO NOTHING;
+		EXECUTE HandleOnlyGitkitToken_sub1(%s);
+		""",
+			(
+				email_address,
+			)
+		)
+		pg_conn.commit()
+		# Insert record into users.
 		# Inser the record into google users. Creation
 		# timestamp will be set on creation, insert again
 		# on reinsert, if confluct occurs, last login will
 		# be the only field updated. 
 		pg_curs.execute("""
-		PREPARE HandleOnlyGitkitToken_sub1(text) AS
+		PREPARE HandleOnlyGitkitToken_sub2(text) AS
 			INSERT INTO
 				google_users
 			(
@@ -850,7 +869,7 @@ def HandleOnlyGitkitToken(email_address):
 			DO UPDATE
 			SET
 				last_login = NOW();
-		EXECUTE HandleOnlyGitkitToken_sub1(%s);
+		EXECUTE HandleOnlyGitkitToken_sub2(%s);
 		""",
 			(
 				email_address,
@@ -874,7 +893,7 @@ def HandleOnlyGitkitToken(email_address):
 		# Insert the user session (g_apptoken) into
 		# the g_apptokens_by_email_address table.
 		pg_curs.execute("""
-		PREPARE HandleOnlyGitkitToken_sub2(text, text, text) AS
+		PREPARE HandleOnlyGitkitToken_sub3(text, text, text) AS
 			INSERT INTO
 				g_apptokens_by_email_address
 			(
@@ -886,7 +905,7 @@ def HandleOnlyGitkitToken(email_address):
 			DO UPDATE
 			SET
 				g_apptoken = $3;
-		EXECUTE HandleOnlyGitkitToken_sub2(%s, %s, %s);
+		EXECUTE HandleOnlyGitkitToken_sub3(%s, %s, %s);
 		""",
 			(
 				email_address,
