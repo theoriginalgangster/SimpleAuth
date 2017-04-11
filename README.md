@@ -373,6 +373,33 @@ Failure:
         error: "User does not exist",
         error_code "DUR_1"
     }
+    
+Confirm User Role:
+--------------
+
+**Possible requests:**
+
+    {
+        "command": "confirm_user_role",
+        "cookie": "some_app_token",
+        "role_name": "dashboard_blogs"
+    }
+
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true"
+    }
+
+Failure:
+
+    {
+    	success: "false",
+        error: "User-role association not found.",
+        error_code "CUR_2"
+    }
 
 **Handling Google Identity Toolkit:**
 ================
@@ -688,7 +715,7 @@ Read Messages:
 
     {
         "command": "read_messages",
-        "g_apptoken": "some_apptoken",
+        "apptoken": "some_apptoken",
         "chat_partner": "gitkit_user@gmail.com",
         "max_messages": 20
     }
@@ -723,9 +750,182 @@ Note: `sender` denotes if the fetcher of the messages (user with the token) is t
     	]
     }
     
+**User Messaging:**
+================
+
+Blogging is something that can be done by authorized users only. If users want to edit or create new blogs, they will have to have a native account.
+
+
+
+
 **All Error Codes:**
 ================
 
 All error codes are prepended by their command, then followed by a number.
+
+Create New Post:
+----------------
+
+**Possible requests:**
+
+    {
+        "command": "create_new_post",
+        "app_token": "some_app_token",
+        "title": "A new post.",
+        "author": "example_user@gmail.com",
+        "publication_timestamp": "2017-03-04 09:24:42",
+        "content": "This is blog post!",
+        "main_image_url": "default_url",
+        "tags": [
+            "tag1",
+    	    "tag2"
+    	],
+    	"category": "coolness",
+    	"hidden": false
+    }
+
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true"
+    }
+
+Failure:
+
+    {
+    	success: "false",
+    	error: "Unrecognized app token."
+    	error_code: "CNP_1"
+    }
+
+Edit Post:
+----------
+
+**Possible requests:**
+
+    {
+        "command": "edit_post",
+        "post_id": 31,
+        "app_token": "bggmlgxmjqapasbvynonuxqpitlpj",
+        "title": "EDIT new post.",
+        "author": "example_user@gmail.com",
+        "publication_timestamp": "2017-03-04 323:24:42",
+        "content": "This is blog post!",
+        "main_image_url": "default_url",
+        "tags": [
+            "tag1",
+    	    "tag2"
+    	],
+    	"category": "coolness",
+    	"hidden": false
+    }
+
+**Possible responses:**
+
+   Success:
+   
+    {
+    	success: "true"
+    }
+
+Failure:
+
+    {
+    	success: "false",
+    	error: "Unrecognized app token."
+    	error_code: "CNP_1"
+    }
+
+Load Full Post:
+---------------
+
+**Possible requests:**
+
+    {
+        "command": "load_full_post",
+        "title": "A new post."
+    }
+
+Load Posts by Category (previews):
+----------------------------------
+
+**Possible requests:**
+
+    {
+        "command": "load_posts_by_category",
+        "category": "some_category",
+        "max_posts": 4,
+	    "pagination": 0,
+		"only_published": true
+    }
+
+Load Posts by Tag (previews):
+-----------------------------
+
+**Possible requests:**
+
+    {
+        "command": "load_posts_by_tag",
+        "tag": "some_tag",
+        "max_posts": 4,
+	    "pagination": 0,
+		"only_published": true
+    }
+
+Load Posts by Most Recent (previews):
+-------------------------------------
+
+**Possible requests:**
+
+    {
+        "command": "load_posts_most_recent",
+        "max_posts": 4,
+	    "pagination": 0,
+		"only_published": true
+    }
+
+Load Posts by Most Viewed (previews):
+-------------------------------------
+
+**Possible requests:**
+
+    {
+        "command": "load_posts_most_viewed",
+        "max_posts": 4,
+	    "pagination": 0,
+		"only_published": true
+    }
+    
+Load Posts by Most Previewed (previews):
+----------------------------------------
+
+**Possible requests:**
+
+    {
+        "command": "load_posts_most_previewed",
+        "max_posts": 4,
+	    "pagination": 0,
+		"only_published": true
+    }
+
+Load All Categories:
+--------------------
+
+**Possible requests:**
+
+    {
+        "command": "load_all_categories"
+    }
+
+Load All Tags:
+--------------
+
+**Possible requests:**
+
+    {
+        "command": "load_all_tags"
+    }
 
 
