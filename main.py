@@ -2,6 +2,7 @@ import falcon
 import json
 import auth
 import messaging
+import blogging
 
 class QuoteResource:
     def on_post(self, req, resp):
@@ -63,6 +64,9 @@ class QuoteResource:
 		elif api_req["command"] == "force_gitkit_user_log_out":
 			auth_resp = auth.ForceGitkitUserLogOut(api_req["email_address"], api_req["admin_key"])
         		resp.body = json.dumps(auth_resp)
+		elif api_req["command"] == "confirm_user_role":
+			auth_resp = auth.ConfirmUserRole(api_req["cookie"], api_req["role_name"])
+        		resp.body = json.dumps(auth_resp)
 		# All messaging module commands.
 		elif api_req["command"] == "g_send_message":
 			messaging_resp = messaging.GSendMessage(api_req["g_apptoken"], api_req["recipient"], api_req["message"])
@@ -76,13 +80,47 @@ class QuoteResource:
 		elif api_req["command"] == "read_messages":
 			messaging_resp = messaging.ReadMessages(api_req["apptoken"], api_req["chat_partner"], api_req["max_messages"])
         		resp.body = json.dumps(messaging_resp)
+		# All blogging module commands.
+		elif api_req["command"] == "create_new_post":
+			blogging_resp = blogging.CreateNewPost(api_req['app_token'],api_req['title'],api_req['author'],api_req['publication_timestamp'],api_req['main_image_url'],api_req['content'],api_req['tags'],api_req['category'],api_req['hidden'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "edit_post":
+			blogging_resp = blogging.EditPost(api_req['app_token'],api_req['post_id'],api_req['title'],api_req['author'],api_req['publication_timestamp'],api_req['main_image_url'],api_req['content'],api_req['tags'],api_req['category'],api_req['hidden'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_full_post":
+			blogging_resp = blogging.LoadFullPost(api_req['title'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_posts_by_category":
+			print("OK")
+			import pprint as pp
+			pp.pprint(api_req)
+			blogging_resp = blogging.LoadPostsByCategory(api_req['category'],api_req['max_posts'],api_req['pagination'],api_req['only_published'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_posts_by_tag":
+			blogging_resp = blogging.LoadPostsByTag(api_req['tag'],api_req['max_posts'],api_req['pagination'],api_req['only_published'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_posts_most_recent":
+			blogging_resp = blogging.LoadPostsMostRecent(api_req['max_posts'],api_req['pagination'],api_req['only_published'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_posts_most_viewed":
+			blogging_resp = blogging.LoadPostsMostViewed(api_req['max_posts'],api_req['pagination'],api_req['only_published'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_posts_most_previewed":
+			blogging_resp = blogging.LoadPostsMostPreviewed(api_req['max_posts'],api_req['pagination'],api_req['only_published'])
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_all_categories":
+			blogging_resp = blogging.LoadAllCategories()
+        		resp.body = json.dumps(blogging_resp)
+		elif api_req["command"] == "load_all_tags":
+			blogging_resp = blogging.LoadAllTags()
+        		resp.body = json.dumps(blogging_resp)
 		else:
 			api_resp["error"] = "Unrecognized Command."
 			api_resp["error_code"] = "API_2"
         		resp.body = json.dumps(api_resp)
 	except Exception as ex:
+		print("ex: ")
 		print(ex)
-		print("THING")
 		resp.body = json.dumps(api_resp)
 
 

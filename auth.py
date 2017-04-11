@@ -810,6 +810,95 @@ def DisassociateUserRole(admin_key, user_name, role_name):
 		response = set_response_failed(response)
 		return response
 
+"""----------------------------------------------------------------------------
+Confir User Role			(Postgres)
+----------------------------------------------------------------------------"""
+CUR_1 = "Unknown cookie."
+CUR_2 = "User-role association not found."
+
+def ConfirmUserRole(cookie, role_name):
+	response = get_default_response()
+	try:
+		# First authenticate the user and make sure their cookie exists.
+		redis_conn = get_redis_conn()
+		session = redis_conn.get(cookie)
+		if session is None:
+			# Unknown cookie.
+			# The user is not authenticated.
+			response['error_code'] = "CUR_1"
+			response['error'] = CUR_1 
+			response = set_response_failed(response)
+			return response
+		# Get the user_name from the cookies by user_name table.
+		pg_conn, pg_curs = get_pg_conn_curser()
+		pg_curs.execute("""
+		PREPARE ConfirmUserRole_sub1(text) AS
+			SELECT 
+				user_name
+			FROM
+				cookies_by_username
+			WHERE
+				cookie = $1;
+		EXECUTE ConfirmUserRole_sub1(%s);
+		""",
+			(
+				cookie,	
+			)
+		)
+		result = pg_curs.fetchone()
+		if result is None:
+			# Close the db connection.
+			pg_conn.close()
+			# User already exists.
+			response['error_code'] = "CUR_1"
+			response['error'] = CUR_1 
+			response = set_response_failed(response)
+			return response
+		else:
+			user_name = result[0]
+		print(user_name)
+		# Just see if at least one row exists for
+		# this admin user.
+		pg_curs.execute("""
+		PREPARE ConfirmUserRole_sub2(text, text) AS
+			SELECT 
+				COUNT(*)
+			FROM
+				user_roles
+			WHERE
+				user_name = $1
+			AND
+				role_name = $2;
+		EXECUTE ConfirmUserRole_sub2(%s, %s);
+		""",
+			(
+				user_name,
+				role_name,	
+			)
+		)
+		result = pg_curs.fetchone()
+		count = result[0]
+		if count == 0:
+			# Close the db connection.
+			pg_conn.close()
+			# User already exists.
+			response['error_code'] = "CUR_2"
+			response['error'] = CUR_2 
+			response = set_response_failed(response)
+			return response
+		
+		# If we got to here, there was at least one user role created.
+		# Return success.
+		response = set_response_success(response)
+		return response
+	except Exception as ex:
+		log_auth_exception(ex)
+		# Close the db connection.
+		pg_conn.close()
+		# Return default failure response.
+		response = set_response_failed(response)
+		return response
+
 
 
 
@@ -1092,6 +1181,7 @@ def ForceGitkitUserLogOut(email_address, admin_key):
 # print(AssociateUserRole(ADMIN_KEY, "test", "some_role"))
 # print(DisassociateUserRole(ADMIN_KEY, "test", "some_role"))
 # print(UnregisterRole(ADMIN_KEY, "some_role"))
+# print(ConfirmUserRole('ecqvepmfpwmzzmrqmcbcsvtwqwdrk', 'dashboard_blogs'));
 # print(HandleOnlyGitkitToken("zndr.k.94@gmail.com"))
 # print(ReadGitkitUserSessionVars("g_kpnaojystvyykcuoousntdkdxszlk", ['creation_timestamp', 'cookie', 'asdfasdf']))
 # print(GitkitUserLogOut("g_kpnaojystvyykcuoousntdkdxszlk"))
