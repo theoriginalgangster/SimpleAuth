@@ -770,17 +770,18 @@ Create New Post:
 
     {
         "command": "create_new_post",
-        "apptoken": "some_apptoken",
+        "app_token": "some_app_token",
         "title": "A new post.",
         "author": "example_user@gmail.com",
         "publication_timestamp": "2017-03-04 09:24:42",
         "content": "This is blog post!",
+        "main_image_url": "default_url",
         "tags": [
-	        "tag1",
-		    "tag2"
-		],
-		"category": "coolness",
-		"hidden": false
+            "tag1",
+    	    "tag2"
+    	],
+    	"category": "coolness",
+    	"hidden": false
     }
 
 **Possible responses:**
@@ -806,19 +807,19 @@ Edit Post:
 
     {
         "command": "edit_post",
-        "apptoken": "some_apptoken",
-        "post_id": 1,
-        "title": "A new post.",
+        "post_id": 31,
+        "app_token": "bggmlgxmjqapasbvynonuxqpitlpj",
+        "title": "EDIT new post.",
         "author": "example_user@gmail.com",
-        "publication_timestamp": "2017-03-04 09:24:42",
-        "content": "This is blog post! again...",
+        "publication_timestamp": "2017-03-04 323:24:42",
+        "content": "This is blog post!",
+        "main_image_url": "default_url",
         "tags": [
-	        "tag1",
-		    "tag2",
-			"edited"
-		],
-		"category": "coolness",
-		"hidden": false
+            "tag1",
+    	    "tag2"
+    	],
+    	"category": "coolness",
+    	"hidden": false
     }
 
 **Possible responses:**
@@ -926,3 +927,5 @@ Load All Tags:
     {
         "command": "load_all_tags"
     }
+
+
